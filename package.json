@@ -1,0 +1,9 @@
+{
+  "name": "grist-tasks-widget",
+  "version": "1.0.0",
+  "description": "Grist widget to display task count",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000"
+  }
+}

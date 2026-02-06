@@ -1,131 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Grist Tasks Widget</title>
-    <meta charset="UTF-8">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .widget-header {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .stats-container {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-        }
-        .stat-box {
-            text-align: center;
-            padding: 15px;
-            background-color: #e8f4f8;
-            border-radius: 6px;
-            min-width: 120px;
-        }
-        .stat-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #007acc;
-        }
-        .stat-label {
-            font-size: 0.9em;
-            color: #666;
-        }
-        .loading {
-            text-align: center;
-            color: #666;
-        }
-        .error {
-            color: #d32f2f;
-            text-align: center;
-            padding: 10px;
-        }
-        .info {
-            text-align: center;
-            color: #666;
-            font-size: 0.9em;
-            margin-top: 20px;
-        }
-    </style>
+    <title>Grist Tasks Widget - Updated</title>
+    <script src="https://cdn.jsdelivr.net/npm/@gristlabs/grist-widget@latest/dist/grist-widget.js"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="widget-header">
-            <h1>Tasks Dashboard</h1>
-            <p>Nombre d'enregistrements dans la table Tasks - Mis à jour</p>
-        </div>
-        
-        <div id="loading" class="loading">Chargement du nombre de tâches...</div>
-        <div id="error" class="error" style="display: none;"></div>
-        
-        <div id="stats" style="display: none;">
-            <div class="stats-container">
-                <div class="stat-box">
-                    <div class="stat-value" id="tasks-count">0</div>
-                    <div class="stat-label">Total Tasks</div>
-                </div>
-            </div>
-            <div class="info">
-                <p>Document : Dev BackLog</p>
-                <p>Table : Tasks</p>
-            </div>
-        </div>
-    </div>
-
+    <h2>Welcome to Grist Tasks Widget!</h2>
+    <p>This widget displays the number of tasks in the Dev-BackLog document.</p>
+    <h3>Tasks Count</h3>
+    <div id="count">Loading...</div>
+    
+    <!-- Updated on 2023-10-06 -->
+    
     <script>
-        // Configuration du widget
-        const GRIST_DOC_ID = "sk4FudEB1LwrVHJKvxYxzL";
-        const GRIST_TABLE_NAME = "Tasks";
+        // Fonction de mouchard pour envoyer les logs à Goose
+        const logToGoose = (msg) => {
+            fetch('http://localhost:8080', { method: 'POST', body: JSON.stringify(msg) }).catch(() => {});
+        };
         
-        // Fonction pour obtenir le nombre d'enregistrements via l'API Grist
-        async function getTaskCount() {
-            try {
-                // Afficher le message de chargement
-                document.getElementById('loading').style.display = 'block';
-                document.getElementById('error').style.display = 'none';
-                document.getElementById('stats').style.display = 'none';
-                
-                // Récupérer les données depuis l'API Grist
-                const response = await fetch(
-                    `https://grist-prod.ssi.int.aznetwork.eu/api/docs/${GRIST_DOC_ID}/tables/${GRIST_TABLE_NAME}/records`
-                );
-                
-                if (!response.ok) {
-                    throw new Error(`Erreur HTTP: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                const count = data.records.length;
-                
-                // Afficher les résultats
-                document.getElementById('tasks-count').textContent = count;
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('stats').style.display = 'block';
-                
-            } catch (error) {
-                console.error("Erreur lors de la récupération du nombre de tâches:", error);
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('error').textContent = "Erreur lors de la récupération des données : " + error.message;
-                document.getElementById('error').style.display = 'block';
-            }
-        }
+        grist.onRecords((records) => {
+            logToGoose({ event: 'data_received', count: records.length, firstRow: records[0] });
+            const countElement = document.getElementById('count');
+            countElement.textContent = `Number of tasks: ${records.length}`;
+            logToGoose({ event: 'display_updated', count: records.length });
+        });
         
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', function() {
-            // Appeler la fonction pour obtenir le nombre de tâches
-            getTaskCount();
+        grist.onOptions((options) => {
+            logToGoose({ event: 'options_received', options: options });
         });
     </script>
 </body>
